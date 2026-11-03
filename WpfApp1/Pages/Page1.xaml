@@ -21,6 +21,7 @@
                 <ComboBox Height="40" Margin="5" Name="ChooseTimeIPZ" SelectionChanged="ChooseTimeIPZ_SelectionChanged" SelectedIndex="0" VerticalAlignment="Center">
                     <ComboBoxItem Content="мин"></ComboBoxItem>
                     <ComboBoxItem Content="час"></ComboBoxItem>
+                    <ComboBoxItem Content="сутки"></ComboBoxItem>
                 </ComboBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Height="50" Margin="5">
@@ -33,6 +34,7 @@
                 <ComboBox Height="40" Margin="5" Name="Tops" SelectedIndex="0" VerticalAlignment="Center">
                     <ComboBoxItem Content="мин"></ComboBoxItem>
                     <ComboBoxItem Content="час"></ComboBoxItem>
+                    <ComboBoxItem Content="сутки"></ComboBoxItem>
                 </ComboBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Height="50" Margin="5"  Visibility="Collapsed" Name="QueueLimitation">

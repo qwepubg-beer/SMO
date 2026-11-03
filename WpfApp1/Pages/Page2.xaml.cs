@@ -61,6 +61,10 @@ namespace WpfApp1.Pages
                 {
                     lambda = lambda / 60.0; // переводим в минуты
                 }
+                else if(ChooseTimeIPZ.SelectedIndex == 2)
+                {
+                    lambda = lambda / 1440;
+                }
                 double inputValue = double.Parse(IPO.Text);
                 double mu, t_obs;
 
@@ -71,6 +75,10 @@ namespace WpfApp1.Pages
                     {
                         mu = mu / 60.0; // переводим в заявки/мин
                     }
+                    else if (Tops.SelectedIndex == 2)
+                    {
+                        mu = mu / 1440.0;
+                    }
                     t_obs = 1.0 / mu;
                 }
                 else 
@@ -79,6 +87,10 @@ namespace WpfApp1.Pages
                     if (Tops.SelectedIndex == 1) // Если выбраны часы для t_обс
                     {
                         t_obs = t_obs * 60.0; // переводим в минуты
+                    }
+                    else if(Tops.SelectedIndex == 2)
+                    {
+                        t_obs = t_obs * 1440.0;
                     }
                     mu = 1.0 / t_obs;
                 }

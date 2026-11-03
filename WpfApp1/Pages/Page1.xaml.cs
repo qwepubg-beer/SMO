@@ -59,7 +59,10 @@ namespace WpfApp1.Pages
                 {
                     lambda = lambda / 60.0; // переводим в минуты
                 }
-
+                else if (ChooseTimeIPZ.SelectedIndex == 2)
+                {
+                    lambda = lambda / 1440;
+                }
                 // 2. Обработка Mu (μ) или T_obs (t_обс)
                 double inputValue = double.Parse(IPO.Text);
                 double mu, t_obs;
