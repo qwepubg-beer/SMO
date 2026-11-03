@@ -5,23 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="500" Width="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Frame Name="Main" Grid.Row="1"></Frame>
-        <Grid Height="40">
+        <Frame Name="Main" Grid.Row="1" NavigationUIVisibility="Hidden"></Frame>
+        <Grid Height="50">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Button Name="OnethreadSMO" Click="OnethreadSMO_Click"></Button>
-            <Button Name="ManythreadSMO" Click="OnethreadSMO_Click"></Button>
-            
+            <Button Name="OnethreadSMO" Click="OnethreadSMO_Click" Margin="5" Content="Одноканальное СМО"></Button>
+            <Button Name="ManythreadSMO" Click="ManythreadSMO_Click" Grid.Column="1" Margin="5" Content="Многоканальные СМО"></Button>
         </Grid>
     </Grid>
 </Window>

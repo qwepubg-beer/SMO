@@ -1,0 +1,61 @@
+﻿<Page x:Class="WpfApp1.Pages.Page1"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:WpfApp1.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Page1">
+    <Grid>
+        <StackPanel VerticalAlignment="Center">
+            <ComboBox Height="40" Margin="5" Name="Choose" SelectionChanged="Choose_SelectionChanged">
+                <ComboBoxItem Content="Однокональная СМО с отказами в обслуживании"></ComboBoxItem>
+                <ComboBoxItem Content="Однокональная СМО с ограниченной длинной очереди"></ComboBoxItem>
+                <ComboBoxItem Content="Однокональная СМО с неограниченной очередью"></ComboBoxItem>
+            </ComboBox>
+            <StackPanel Orientation="Horizontal" Height="50" Margin="5">
+                <Label Content="Интенсивность потока заявок λ:" FontSize="16" VerticalAlignment="Center"/>
+                <TextBox Name="IPZ" Width="60" Margin="5"></TextBox>
+                <Label Content="заявок в" FontSize="16" VerticalAlignment="Center"/>
+                <ComboBox Height="40" Margin="5" Name="ChooseTimeIPZ" SelectionChanged="ChooseTimeIPZ_SelectionChanged" SelectedIndex="0" VerticalAlignment="Center">
+                    <ComboBoxItem Content="мин"></ComboBoxItem>
+                    <ComboBoxItem Content="час"></ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="50" Margin="5">
+                <Label Content="Обслуживание:" FontSize="16" VerticalAlignment="Center"/>
+                <TextBox Name="IPO" Width="60" Margin="5"></TextBox>
+                <ComboBox Height="40" Margin="5" Name="ServiceType" SelectedIndex="0" VerticalAlignment="Center">
+                    <ComboBoxItem Content="μ (интенсивность)"></ComboBoxItem>
+                    <ComboBoxItem Content="t_обс (время)"></ComboBoxItem>
+                </ComboBox>
+                <ComboBox Height="40" Margin="5" Name="Tops" SelectedIndex="0" VerticalAlignment="Center">
+                    <ComboBoxItem Content="мин"></ComboBoxItem>
+                    <ComboBoxItem Content="час"></ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="50" Margin="5"  Visibility="Collapsed" Name="QueueLimitation">
+                <Label Content="Длина очереди m:" FontSize="16" VerticalAlignment="Center"/>
+                <TextBox Name="LenghtQ" Width="60" Margin="5"></TextBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="50" Margin="5"  Visibility="Collapsed" Name="QueueWithoutlimitation">
+                <Label Content="Число заявок в очереди m:" FontSize="16" VerticalAlignment="Center"/>
+                <TextBox Name="CountQ" Width="60" Margin="5"></TextBox>
+            </StackPanel>
+            <ScrollViewer Height="190" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="5">
+                <TextBlock FontSize="14" Name="TextAnswer" TextWrapping="Wrap" />
+            </ScrollViewer>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Margin="5" Name="Exsel" Click="Exsel_Click" Content="Экспорт" Grid.Column="1"></Button>
+                <Button Height="40" Name="Answer" Content="Решить" Click="Answer_Click" Margin="5"></Button>
+                <Button Height="40" Name="Clear" Content="Очистить" Click="Clear_Click" Margin="5" Grid.Column="2"></Button>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Page>

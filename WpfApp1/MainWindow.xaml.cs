@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using WpfApp1.Pages;
 namespace WpfApp1
 {
     /// <summary>
@@ -27,7 +27,12 @@ namespace WpfApp1
 
         private void OnethreadSMO_Click(object sender, RoutedEventArgs e)
         {
+            Main.NavigationService.Navigate(new Page1());
+        }
 
+        private void ManythreadSMO_Click(object sender, RoutedEventArgs e)
+        {
+            Main.NavigationService.Navigate(new Page2());
         }
     }
 }
