@@ -25,14 +25,33 @@ namespace WpfApp1
             InitializeComponent();
         }
 
-        private void OnethreadSMO_Click(object sender, RoutedEventArgs e)
-        {
-            Main.NavigationService.Navigate(new Page1());
-        }
 
-        private void ManythreadSMO_Click(object sender, RoutedEventArgs e)
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
-            Main.NavigationService.Navigate(new Page2());
+            MenuItem item = (MenuItem)sender;
+
+            switch (item.Tag)
+            {
+                case "1.1":
+                    MainFrame.NavigationService.Navigate(new Page1(1));
+                    break;
+                case "1.2":
+                    MainFrame.NavigationService.Navigate(new Page1(2));
+                    break;
+                case "1.3":
+                    MainFrame.NavigationService.Navigate(new Page1(3));
+                    break;
+                case "2.1":
+                    MainFrame.NavigationService.Navigate(new Page2(1));
+                    break;
+                case "2.2":
+                    MainFrame.NavigationService.Navigate(new Page2(2));
+                    break;
+                case "2.3":
+                    MainFrame.NavigationService.Navigate(new Page2(3));
+                    break;
+            }
+                
         }
     }
 }

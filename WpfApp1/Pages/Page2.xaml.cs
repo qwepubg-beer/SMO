@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Excel = Microsoft.Office.Interop.Excel;
+
 namespace WpfApp1.Pages
 {
     /// <summary>
@@ -14,211 +12,331 @@ namespace WpfApp1.Pages
     /// </summary>
     public partial class Page2 : Page
     {
-        public Page2()
+        private int mode;
+        public Page2(int mode)
         {
             InitializeComponent();
+            this.mode = mode;
+            ShowSelectedQueuePanel();
         }
-        private void Choose_SelectionChanged(object sender, SelectionChangedEventArgs e)
+
+        #region Обработчики событий
+
+
+
+        private void Answer_Click(object sender, RoutedEventArgs e)
+        {
+            CalculateAnswer();
+        }
+
+        private void Exsel_Click(object sender, RoutedEventArgs e)
+        {
+            ExportToExcel();
+        }
+
+        private void Clear_Click(object sender, RoutedEventArgs e)
+        {
+            ClearInputs();
+        }
+
+        #endregion
+
+        #region Логика интерфейса
+
+        private void ShowSelectedQueuePanel()
         {
             if (QueueLimitation == null || QueueWithoutlimitation == null) return;
 
             QueueLimitation.Visibility = Visibility.Collapsed;
             QueueWithoutlimitation.Visibility = Visibility.Collapsed;
 
-            switch (Choose.SelectedIndex)
+            switch (mode)
             {
-                case 1:
+                case 2:
                     QueueLimitation.Visibility = Visibility.Visible;
                     break;
-                case 2:
-                    QueueWithoutlimitation.Visibility = Visibility.Visible;
+                case 3:
+                    //QueueWithoutlimitation.Visibility = Visibility.Visible;
                     break;
             }
         }
-        private double Factorial(int n)
+
+        private void ClearInputs()
         {
-            if (n == 0 || n == 1) return 1;
+            TextAnswer.Text = null;
+            CountQ.Text = null;
+            LenghtQ.Text = null;
+            IPO.Text = null;
+            IPZ.Text = null;
+            CountThread.Text = null;
+        }
+
+        #endregion
+
+        #region Чтение входных данных
+
+        /// <summary>Читает количество каналов n с проверкой.</summary>
+        private bool TryParseChannels(out int n)
+        {
+            n = 0;
+            if (string.IsNullOrWhiteSpace(CountThread.Text))
+            {
+                ShowWarning("Заполните все обязательные поля (n, λ, μ / t_обс).");
+                return false;
+            }
+            n = int.Parse(CountThread.Text);
+            if (n <= 0)
+            {
+                ShowWarning("Количество каналов должно быть больше 0.");
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>Читает интенсивность потока заявок λ с учётом единиц измерения (часы -> минуты).</summary>
+        private double ParseLambda()
+        {
+            double lambda = double.Parse(IPZ.Text);
+            if (ChooseTimeIPZ.SelectedIndex == 1)
+            {
+                lambda /= 60.0; // заявки/час -> заявки/мин
+            }
+            return lambda;
+        }
+
+        /// <summary>
+        /// Читает интенсивность обслуживания: пользователь вводит либо μ,
+        /// либо среднее время обслуживания t_обс — в зависимости от ServiceType.
+        /// </summary>
+        private void ParseServiceRate(out double mu, out double tObs)
+        {
+            double inputValue = double.Parse(IPO.Text);
+
+            if (ServiceType.SelectedIndex == 0) // введено μ
+            {
+                mu = inputValue;
+                if (Tops.SelectedIndex == 1) mu /= 60.0; // заявок/час -> заявок/мин
+                tObs = 1.0 / mu;
+            }
+            else // введено t_обс
+            {
+                tObs = inputValue;
+                if (Tops.SelectedIndex == 1) tObs *= 60.0; // часы -> минуты
+                mu = 1.0 / tObs;
+            }
+        }
+
+        /// <summary>Читает длину ограниченной очереди m с проверкой.</summary>
+        private bool TryParseQueueLength(int defaultValue, out int m)
+        {
+            m = defaultValue;
+            if (string.IsNullOrWhiteSpace(LenghtQ.Text))
+            {
+                ShowWarning("Введите длину очереди m.");
+                return false;
+            }
+            m = int.Parse(LenghtQ.Text);
+            return true;
+        }
+
+        #endregion
+
+        #region Вспомогательные вычисления
+
+        private static double Factorial(int n)
+        {
+            if (n <= 1) return 1;
             double result = 1;
             for (int i = 2; i <= n; i++) result *= i;
             return result;
         }
-        private void Answer_Click(object sender, RoutedEventArgs e)
+
+        /// <summary>Сумма r^k / k! при k = 0..n.</summary>
+        private static double SumPowFactorial(double r, int n)
+        {
+            double sum = 0;
+            for (int k = 0; k <= n; k++)
+            {
+                sum += Math.Pow(r, k) / Factorial(k);
+            }
+            return sum;
+        }
+
+        #endregion
+
+        #region Расчёты
+
+        private void CalculateAnswer()
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(CountThread.Text) || string.IsNullOrWhiteSpace(IPZ.Text) || string.IsNullOrWhiteSpace(IPO.Text))
+                if (!TryParseChannels(out int n))
                 {
-                    MessageBox.Show("Заполните все обязательные поля (n, λ, μ / t_обс).", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                int n = int.Parse(CountThread.Text);
-                if (n <= 0) { MessageBox.Show("Количество каналов должно быть больше 0."); return; }
+                double lambda = ParseLambda();
+                ParseServiceRate(out double mu, out double tObs);
 
-                // 1. Обработка Lambda (λ) - всегда интенсивность
-                double lambda = double.Parse(IPZ.Text);
-                if (ChooseTimeIPZ.SelectedIndex == 1) // Если для λ выбран "час"
+                double r = lambda * tObs;   // интенсивность нагрузки
+                double rho = r / n;         // коэффициент загрузки
+
+                var sb = new StringBuilder();
+                AppendHeader(sb, n, lambda, mu, tObs, r, rho);
+
+                bool success = true;
+                switch (mode)
                 {
-                    lambda = lambda / 60.0; // переводим в минуты
-                }
-                double inputValue = double.Parse(IPO.Text);
-                double mu, t_obs;
-
-                if (ServiceType.SelectedIndex == 0) // Пользователь ввел μ (интенсивность)
-                {
-                    mu = inputValue;
-                    if (Tops.SelectedIndex == 1) // Если выбраны часы для μ
-                    {
-                        mu = mu / 60.0; // переводим в заявки/мин
-                    }
-                    t_obs = 1.0 / mu;
-                }
-                else 
-                {
-                    t_obs = inputValue;
-                    if (Tops.SelectedIndex == 1) // Если выбраны часы для t_обс
-                    {
-                        t_obs = t_obs * 60.0; // переводим в минуты
-                    }
-                    mu = 1.0 / t_obs;
-                }
-
-                // 3. Расчет нагрузок
-                double r = lambda * t_obs; // Интенсивность нагрузки (равносильно lambda / mu)
-                double rho = r / n;      
-
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Системы массового обслуживания (Многоканальные).");
-                sb.AppendLine($"Количество каналов: n = {n}");
-                sb.AppendLine($"Интенсивность потока заявок: λ = {lambda:F3} заявок/мин.");
-                sb.AppendLine($"Интенсивность обслуживания: μ = {mu:F3} заявок/мин.");
-                sb.AppendLine($"Среднее время обслуживания: t_обс = {t_obs:F3} мин.");
-                sb.AppendLine($"Интенсивность нагрузки: r = λ * t_обс = {r:F3}");
-                sb.AppendLine($"Коэффициент загрузки: ρ = r/n = {rho:F3}\n");
-
-                switch (Choose.SelectedIndex)
-                {
-                    case 0:
-                        sb.AppendLine("--- Многоканальная СМО с отказами ---");
-
-                        double sumP0 = 0;
-                        for (int k = 0; k <= n; k++)
-                        {
-                            sumP0 += Math.Pow(r, k) / Factorial(k);
-                        }
-                        double P0 = 1.0 / sumP0;
-                        sb.AppendLine($"Вероятность того, что все каналы свободны: P0 = {P0:F4}");
-
-                        double P_otk = (Math.Pow(r, n) / Factorial(n)) * P0;
-                        sb.AppendLine($"Вероятность отказа (все каналы заняты): P_отк = {P_otk:F4} ({(P_otk * 100):F2}%)");
-
-                        double Q = 1 - P_otk;
-                        sb.AppendLine($"Относительная пропускная способность: Q = {Q:F4}");
-
-                        double A = lambda * Q;
-                        sb.AppendLine($"Абсолютная пропускная способность: A = {A:F3} заявок/мин.");
-
-                        double k_busy = r * Q;
-                        sb.AppendLine($"Среднее число занятых каналов: k = r * Q = {k_busy:F3}");
-
-                        double t_sys = k_busy / lambda;
-                        sb.AppendLine($"Среднее время пребывания заявки в системе: t_сист = {t_sys:F3} мин.");
-                        break;
-
                     case 1:
-                        if (string.IsNullOrWhiteSpace(LenghtQ.Text)) { MessageBox.Show("Введите длину очереди m."); return; }
-                        int m = int.Parse(LenghtQ.Text);
-
-                        sb.AppendLine($"--- Многоканальная СМО с ограниченной очередью (m = {m}) ---");
-
-                        double sumBase = 0;
-                        for (int k = 0; k <= n; k++) sumBase += Math.Pow(r, k) / Factorial(k);
-
-                        double sumQueue = 0;
-                        for (int k = 1; k <= m; k++) sumQueue += Math.Pow(r / n, k);
-
-                        double P0_lim = 1.0 / (sumBase + (Math.Pow(r, n) / Factorial(n)) * sumQueue);
-                        sb.AppendLine($"Вероятность того, что все каналы свободны: P0 = {P0_lim:F4}");
-
-                        double P_otk_lim = (Math.Pow(r, n + m) / (Factorial(n) * Math.Pow(n, m))) * P0_lim;
-                        sb.AppendLine($"Вероятность отказа: P_отк = {P_otk_lim:F4} ({(P_otk_lim * 100):F2}%)");
-
-                        double Q_lim = 1 - P_otk_lim;
-                        sb.AppendLine($"Относительная пропускная способность: Q = {Q_lim:F4}");
-
-                        double A_lim = lambda * Q_lim;
-                        sb.AppendLine($"Абсолютная пропускная способность: A = {A_lim:F3} заявок/мин.");
-
-                        double L_och = 0;
-                        double coeff = (P0_lim * Math.Pow(r, n)) / Factorial(n);
-                        for (int k = 1; k <= m; k++) L_och += k * Math.Pow(r / n, k);
-                        L_och *= coeff;
-                        sb.AppendLine($"Средняя длина очереди: L_оч = {L_och:F3}");
-
-                        double L_sys = L_och + r * Q_lim;
-                        sb.AppendLine($"Среднее число заявок в системе: L_сист = {L_sys:F3}");
-
-                        double W_och = L_och / lambda;
-                        sb.AppendLine($"Среднее время ожидания в очереди: T_оч = {W_och:F3} мин.");
-
-                        double W_sys = L_sys / lambda;
-                        sb.AppendLine($"Среднее время в системе: T_сист = {W_sys:F3} мин.");
+                        AppendLossSystemResults(sb, n, lambda, r);
                         break;
-
                     case 2:
-                        sb.AppendLine("--- Многоканальная СМО с неограниченной очередью ---");
-                        if (rho >= 1)
-                        {
-                            sb.AppendLine($"ВНИМАНИЕ: Коэффициент загрузки ρ = {rho:F3} >= 1.");
-                            sb.AppendLine("Система не справляется с потоком. Очередь будет бесконечно расти.");
-                            break;
-                        }
-
-                        double sumBaseUn = 0;
-                        for (int k = 0; k < n; k++) sumBaseUn += Math.Pow(r, k) / Factorial(k);
-
-                        double P0_un = 1.0 / (sumBaseUn + (Math.Pow(r, n) / Factorial(n)) * (1.0 / (1 - rho)));
-                        sb.AppendLine($"Вероятность того, что все каналы свободны: P0 = {P0_un:F4}");
-
-                        sb.AppendLine("Вероятность отказа: P_отк = 0 (очередь не ограничена)");
-                        sb.AppendLine("Относительная пропускная способность: Q = 1");
-                        sb.AppendLine($"Абсолютная пропускная способность: A = λ = {lambda:F3} заявок/мин.");
-
-                        double P_wait = (Math.Pow(r, n) / (Factorial(n) * (1 - rho))) * P0_un;
-                        sb.AppendLine($"Вероятность ожидания в очереди: P_ож = {P_wait:F4}");
-
-                        double L_och_un = P_wait * (rho / (1 - rho));
-                        sb.AppendLine($"Средняя длина очереди: L_оч = {L_och_un:F3}");
-
-                        double L_sys_un = L_och_un + r;
-                        sb.AppendLine($"Среднее число заявок в системе: L_сист = {L_sys_un:F3}");
-
-                        double W_och_un = L_och_un / lambda;
-                        sb.AppendLine($"Среднее время ожидания в очереди: T_оч = {W_och_un:F3} мин.");
-
-                        double W_sys_un = L_sys_un / lambda;
-                        sb.AppendLine($"Среднее время в системе: T_сист = {W_sys_un:F3} мин.");
-
-                        if (!string.IsNullOrWhiteSpace(CountQ.Text))
-                        {
-                            int m2 = int.Parse(CountQ.Text);
-                            double P_m = P_wait * Math.Pow(rho, m2) * (1 - rho);
-                            sb.AppendLine($"Вероятность того, что в системе ровно {n + m2} заявок (n каналов + {m2} в очереди): {P_m:F4}");
-                        }
+                        success = AppendLimitedQueueResults(sb, n, lambda, r);
+                        break;
+                    case 3:
+                        AppendUnlimitedQueueResults(sb, n, lambda, r, rho, CountQ.Text);
                         break;
                 }
-                TextAnswer.Text = sb.ToString();
+
+                if (success)
+                {
+                    TextAnswer.Text = sb.ToString();
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при расчете: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Ошибка при расчете: {ex.Message}");
             }
         }
-        private void Exsel_Click(object sender, RoutedEventArgs e)
+
+        private static void AppendHeader(StringBuilder sb, int n, double lambda, double mu, double tObs, double r, double rho)
+        {
+            sb.AppendLine("Системы массового обслуживания (Многоканальные).");
+            sb.AppendLine($"Количество каналов: n = {n}");
+            sb.AppendLine($"Интенсивность потока заявок: λ = {lambda:F3} заявок/мин.");
+            sb.AppendLine($"Интенсивность обслуживания: μ = {mu:F3} заявок/мин.");
+            sb.AppendLine($"Среднее время обслуживания: t_обс = {tObs:F3} мин.");
+            sb.AppendLine($"Интенсивность нагрузки: r = λ * t_обс = {r:F3}");
+            sb.AppendLine($"Коэффициент загрузки: ρ = r/n = {rho:F3}\n");
+        }
+
+        /// <summary>Многоканальная СМО с отказами.</summary>
+        private static void AppendLossSystemResults(StringBuilder sb, int n, double lambda, double r)
+        {
+            sb.AppendLine("--- Многоканальная СМО с отказами ---");
+
+            double P0 = 1.0 / SumPowFactorial(r, n);
+            sb.AppendLine($"Вероятность того, что все каналы свободны: P0 = {P0:F4}");
+
+            double pOtk = (Math.Pow(r, n) / Factorial(n)) * P0;
+            sb.AppendLine($"Вероятность отказа (все каналы заняты): P_отк = {pOtk:F4} ({pOtk * 100:F2}%)");
+
+            double Q = 1 - pOtk;
+            sb.AppendLine($"Относительная пропускная способность: Q = {Q:F4}");
+
+            double A = lambda * Q;
+            sb.AppendLine($"Абсолютная пропускная способность: A = {A:F3} заявок/мин.");
+
+            double kBusy = r * Q;
+            sb.AppendLine($"Среднее число занятых каналов: k = r * Q = {kBusy:F3}");
+
+            double tSys = kBusy / lambda;
+            sb.AppendLine($"Среднее время пребывания заявки в системе: t_сист = {tSys:F3} мин.");
+        }
+
+        /// <summary>Многоканальная СМО с ограниченной очередью. Возвращает false, если данные не введены.</summary>
+        private bool AppendLimitedQueueResults(StringBuilder sb, int n, double lambda, double r)
+        {
+            if (!TryParseQueueLength(0, out int m))
+            {
+                return false;
+            }
+
+            sb.AppendLine($"--- Многоканальная СМО с ограниченной очередью (m = {m}) ---");
+
+            double sumQueue = 0;
+            for (int k = 1; k <= m; k++) sumQueue += Math.Pow(r / n, k);
+
+            double P0 = 1.0 / (SumPowFactorial(r, n) + (Math.Pow(r, n) / Factorial(n)) * sumQueue);
+            sb.AppendLine($"Вероятность того, что все каналы свободны: P0 = {P0:F4}");
+
+            double pOtk = (Math.Pow(r, n + m) / (Factorial(n) * Math.Pow(n, m))) * P0;
+            sb.AppendLine($"Вероятность отказа: P_отк = {pOtk:F4} ({pOtk * 100:F2}%)");
+
+            double Q = 1 - pOtk;
+            sb.AppendLine($"Относительная пропускная способность: Q = {Q:F4}");
+
+            double A = lambda * Q;
+            sb.AppendLine($"Абсолютная пропускная способность: A = {A:F3} заявок/мин.");
+
+            double LOch = ComputeLimitedQueueLength(P0, n, r, m);
+            sb.AppendLine($"Средняя длина очереди: L_оч = {LOch:F3}");
+
+            double LSys = LOch + r * Q;
+            sb.AppendLine($"Среднее число заявок в системе: L_сист = {LSys:F3}");
+
+            sb.AppendLine($"Среднее время ожидания в очереди: T_оч = {LOch / lambda:F3} мин.");
+            sb.AppendLine($"Среднее время в системе: T_сист = {LSys / lambda:F3} мин.");
+            return true;
+        }
+
+        /// <summary>Средняя длина очереди для СМО с ограниченной очередью.</summary>
+        private static double ComputeLimitedQueueLength(double P0, int n, double r, int m)
+        {
+            double L = 0;
+            double coeff = (P0 * Math.Pow(r, n)) / Factorial(n);
+            for (int k = 1; k <= m; k++) L += k * Math.Pow(r / n, k);
+            return L * coeff;
+        }
+
+        /// <summary>Многоканальная СМО с неограниченной очередью.</summary>
+        private static void AppendUnlimitedQueueResults(StringBuilder sb, int n, double lambda, double r, double rho, string CountQ)
+        {
+            sb.AppendLine("--- Многоканальная СМО с неограниченной очередью ---");
+
+            if (rho >= 1)
+            {
+                sb.AppendLine($"ВНИМАНИЕ: Коэффициент загрузки ρ = {rho:F3} >= 1.");
+                sb.AppendLine("Система не справляется с потоком. Очередь будет бесконечно расти.");
+                return;
+            }
+
+            double P0 = 1.0 / (SumPowFactorial(r, n - 1) + (Math.Pow(r, n) / Factorial(n)) * (1.0 / (1 - rho)));
+            sb.AppendLine($"Вероятность того, что все каналы свободны: P0 = {P0:F4}");
+
+            sb.AppendLine("Вероятность отказа: P_отк = 0 (очередь не ограничена)");
+            sb.AppendLine("Относительная пропускная способность: Q = 1");
+            sb.AppendLine($"Абсолютная пропускная способность: A = λ = {lambda:F3} заявок/мин.");
+
+            double PWait = (Math.Pow(r, n) / (Factorial(n) * (1 - rho))) * P0;
+            sb.AppendLine($"Вероятность ожидания в очереди: P_ож = {PWait:F4}");
+
+            double LOch = PWait * (rho / (1 - rho));
+            sb.AppendLine($"Средняя длина очереди: L_оч = {LOch:F3}");
+
+            double LSys = LOch + r;
+            sb.AppendLine($"Среднее число заявок в системе: L_сист = {LSys:F3}");
+
+            sb.AppendLine($"Среднее время ожидания в очереди: T_оч = {LOch / lambda:F3} мин.");
+            sb.AppendLine($"Среднее время в системе: T_сист = {LSys / lambda:F3} мин.");
+
+            if (!string.IsNullOrWhiteSpace(CountQ))
+            {
+                int m = int.Parse(CountQ);
+                double Pm = PWait * Math.Pow(rho, m) * (1 - rho);
+                sb.AppendLine($"Вероятность того, что в системе ровно {n + m} заявок (n каналов + {m} в очереди): {Pm:F4}");
+            }
+        }
+
+        #endregion
+
+        #region Экспорт в Excel
+
+        private void ExportToExcel()
         {
             if (string.IsNullOrWhiteSpace(TextAnswer.Text))
             {
-                MessageBox.Show("Сначала выполните расчет (нажмите 'Решить').", "Внимание", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowInfo("Сначала выполните расчет (нажмите 'Решить').");
                 return;
             }
 
@@ -235,34 +353,50 @@ namespace WpfApp1.Pages
                 worksheet.Name = "Многоканальная СМО";
 
                 string[] lines = TextAnswer.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    worksheet.Cells[i + 1, 1] = lines[i];
-                }
-
+                FillWorksheet(worksheet, lines);
                 worksheet.Columns.AutoFit();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка экспорта в Excel: {ex.Message}\nУбедитесь, что Excel установлен.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowError($"Ошибка экспорта в Excel: {ex.Message}\nУбедитесь, что Excel установлен.");
             }
             finally
             {
-                if (worksheet != null) Marshal.ReleaseComObject(worksheet);
-                if (workbook != null) Marshal.ReleaseComObject(workbook);
-                if (excelApp != null) Marshal.ReleaseComObject(excelApp);
+                ReleaseComObject(worksheet);
+                ReleaseComObject(workbook);
+                ReleaseComObject(excelApp);
             }
         }
 
-        private void Clear_Click(object sender, RoutedEventArgs e)
+        private static void FillWorksheet(Excel.Worksheet worksheet, string[] lines)
         {
-            TextAnswer.Text = null;
-            CountQ.Text=null;
-            LenghtQ.Text=null;
-            IPO.Text=null;
-            IPZ.Text=null;
-            CountThread.Text=null;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                worksheet.Cells[i + 1, 1] = lines[i];
+            }
         }
+
+        private static void ReleaseComObject(object comObject)
+        {
+            if (comObject != null)
+            {
+                Marshal.ReleaseComObject(comObject);
+            }
+        }
+
+        #endregion
+
+        #region Сообщения пользователю
+
+        private void ShowWarning(string message) =>
+            MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+        private void ShowError(string message) =>
+            MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+
+        private void ShowInfo(string message) =>
+            MessageBox.Show(message, "Внимание", MessageBoxButton.OK, MessageBoxImage.Information);
+
+        #endregion
     }
 }

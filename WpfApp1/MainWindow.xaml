@@ -5,22 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="800">
+        Title="MainWindow" Height="700" Width="1100">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="AUTO"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Frame Name="Main" Grid.Row="1" NavigationUIVisibility="Hidden"></Frame>
-        <Grid Height="50">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            <Button Name="OnethreadSMO" Click="OnethreadSMO_Click" Margin="5" Content="Одноканальное СМО"></Button>
-            <Button Name="ManythreadSMO" Click="ManythreadSMO_Click" Grid.Column="1" Margin="5" Content="Многоканальные СМО"></Button>
-        </Grid>
+        <Menu  FontSize="14" Height="25" VerticalAlignment="Top">
+            <MenuItem Header="Одноканальные СМО">
+                <MenuItem Tag="1.1" Click="MenuItem_Click" Header="Одноканальные с отказами в обслуживании" ></MenuItem>
+                <MenuItem Tag="1.2" Click="MenuItem_Click" Header="Одноканальные с ограниченной длиной очереди" ></MenuItem>
+                <MenuItem Tag="1.3" Click="MenuItem_Click" Header="Одноканальные с неограниченной длиной очереди"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="Многоканальные СМО">
+                <MenuItem Tag="2.1" Click="MenuItem_Click" Header="Многоканальные с отказами в обслуживании" ></MenuItem>
+                <MenuItem Tag="2.2" Click="MenuItem_Click" Header="Многоканальные с ограниченной длиной очереди" ></MenuItem>
+                <MenuItem Tag="2.3" Click="MenuItem_Click" Header="Многоканальные с неограниченной длиной очереди"></MenuItem>
+            </MenuItem>
+        </Menu>
+        <Frame NavigationUIVisibility="Hidden" Grid.Row="1" x:Name="MainFrame"></Frame>
     </Grid>
 </Window>

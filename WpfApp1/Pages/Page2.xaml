@@ -9,41 +9,36 @@
       Title="Page2">
     <Grid>
         <StackPanel VerticalAlignment="Center">
-            <ComboBox Height="40" Margin="5" Name="Choose" SelectionChanged="Choose_SelectionChanged">
-                <ComboBoxItem Content="Многокональная СМО с отказами в обслуживании"></ComboBoxItem>
-                <ComboBoxItem Content="Многокональная СМО с ограниченной длинной очереди"></ComboBoxItem>
-                <ComboBoxItem Content="Многокональная СМО с неограниченной очередью"></ComboBoxItem>
-            </ComboBox>
-            <StackPanel Orientation="Horizontal" Height="50" Margin="5">
+            <StackPanel Orientation="Horizontal" Height="AUTO" Margin="5">
                 <Label Content="Количество каналов (обслуживающих устройств), n =" FontSize="16" VerticalAlignment="Center"/>
                 <TextBox Name="CountThread" Width="60" Margin="5"></TextBox>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="50" Margin="5">
+            <StackPanel Orientation="Horizontal" Height="AUTO" Margin="5">
                 <Label Content="Интенсивность потока заявок λ:" FontSize="16" VerticalAlignment="Center"/>
                 <TextBox Name="IPZ" Width="60" Margin="5"></TextBox>
                 <Label Content="заявок в" FontSize="16" VerticalAlignment="Center"/>
-                <ComboBox Height="40" Margin="5" Name="ChooseTimeIPZ" SelectedIndex="0" VerticalAlignment="Center">
+                <ComboBox  Height="40" Margin="5" Name="ChooseTimeIPZ" SelectedIndex="0" VerticalAlignment="Center">
                     <ComboBoxItem Content="мин"></ComboBoxItem>
                     <ComboBoxItem Content="час"></ComboBoxItem>
                 </ComboBox>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="50" Margin="5">
+            <StackPanel Orientation="Horizontal" Height="AUTO" Margin="5">
                 <Label Content="Обслуживание:" FontSize="16" VerticalAlignment="Center"/>
                 <TextBox Name="IPO" Width="60" Margin="5"></TextBox>
                 <ComboBox Height="40" Margin="5" Name="ServiceType" SelectedIndex="0" VerticalAlignment="Center">
                     <ComboBoxItem Content="μ (интенсивность)"></ComboBoxItem>
                     <ComboBoxItem Content="t_обс (время)"></ComboBoxItem>
                 </ComboBox>
-                <ComboBox Height="40" Margin="5" Name="Tops" SelectedIndex="0" VerticalAlignment="Center">
+                <ComboBox  Height="40" Margin="5" Name="Tops" SelectedIndex="0" VerticalAlignment="Center">
                     <ComboBoxItem Content="мин"></ComboBoxItem>
                     <ComboBoxItem Content="час"></ComboBoxItem>
                 </ComboBox>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="50" Margin="5"  Visibility="Collapsed" Name="QueueLimitation">
+            <StackPanel Orientation="Horizontal" Height="AUTO" Margin="5"  Visibility="Collapsed" Name="QueueLimitation">
                 <Label Content="Длина очереди m:" FontSize="16" VerticalAlignment="Center"/>
                 <TextBox Name="LenghtQ" Width="60" Margin="5"></TextBox>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Height="50" Margin="5"  Visibility="Collapsed" Name="QueueWithoutlimitation">
+            <StackPanel Orientation="Horizontal" Height="AUTO" Margin="5"  Visibility="Collapsed" Name="QueueWithoutlimitation">
                 <Label Content="Число заявок в очереди m:" FontSize="16" VerticalAlignment="Center"/>
                 <TextBox Name="CountQ" Width="60" Margin="5"></TextBox>
             </StackPanel>
@@ -56,7 +51,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Button Margin="5" Name="Exsel" Click="Exsel_Click" Content="Экспорт" Grid.Column="1"></Button>
+                <Button Margin="5" Height="40" Name="Exsel" Click="Exsel_Click" Content="Экспорт" Grid.Column="1"></Button>
                 <Button Height="40" Name="Answer" Content="Решить" Click="Answer_Click" Margin="5"></Button>
                 <Button Height="40" Name="Clear" Content="Очистить" Click="Clear_Click" Margin="5" Grid.Column="2"></Button>
             </Grid>
